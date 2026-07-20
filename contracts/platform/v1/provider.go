@@ -104,12 +104,40 @@ type CatalogItem struct {
 	NodeID    NodeID
 }
 
+// Person is one cast or crew credit — a name, and an optional role (a character
+// or a job). Sources that expose only names leave Role empty (ADR 0034).
+type Person struct {
+	Name string
+	Role string
+}
+
+// EpisodePreview is one episode in a series' descriptive preview (ADR 0034) —
+// what a detail screen shows so a user can read the episode list *before*
+// deciding to add the series, including for a virtual series that has no
+// materialised tree. It is a read-only projection, never persisted and never the
+// materialised Node: Import still builds the tree from the source's own
+// structure. The Platform hands this list to the UI, which groups it by season.
+type EpisodePreview struct {
+	Season   int
+	Episode  int
+	Title    string
+	Overview string
+	// Thumbnail is a still image URL for the episode, empty when the source has
+	// none.
+	Thumbnail string
+	// Released is the source's air/release date as it provides it (an ISO date or
+	// a year), display-only — the Platform does not parse it.
+	Released string
+}
+
 // ContentMetadata is the descriptive detail a MetadataProvider resolves for a
-// ContentRef (the `meta` resource) — used to enrich an existing node, and as the
-// detail Import draws on when it materialises. It is deliberately the
-// *descriptive* surface, not the tree: a work's children (seasons, episodes)
-// are materialisation's concern, built inside Import where the source's
-// structure is known, not carried on this flat enrichment DTO.
+// ContentRef (the `meta` resource) — used to enrich an existing node, to back a
+// detail screen (for a virtual item and, re-derived, an in-library one — ADR
+// 0034), and as the detail Import draws on when it materialises. It is the
+// *descriptive* surface: the flat fields plus, for a series, a read-only episode
+// *preview*. It is still not the materialised tree — a work's children are built
+// inside Import where the source's structure is known — but it is no longer
+// artificially thin (ADR 0034 refines ADR 0027's "flat enrichment DTO").
 type ContentMetadata struct {
 	Ref      ContentRef
 	Title    string
@@ -118,6 +146,20 @@ type ContentMetadata struct {
 	Poster   string
 	Backdrop string
 	Genres   []string
+	// Logo is the clearlogo/title-treatment image URL, empty when the source has
+	// none. It renders as a detail hero's title (ADR 0034).
+	Logo string
+	// Cast is the top billed cast, best-first as the source ranks it.
+	Cast []Person
+	// Rating is the source's rating on its own scale (Stremio/IMDB is out of 10),
+	// 0 when unknown.
+	Rating float64
+	// Runtime is a display runtime string ("120 min", "2h 5m") as the source
+	// provides it — display-only, since the format varies (ADR 0034).
+	Runtime string
+	// Episodes is the series episode preview (ADR 0034), empty for a movie or a
+	// meta-only source. A read projection the UI groups by season; not the tree.
+	Episodes []EpisodePreview
 }
 
 // StreamLink is one playable location a StreamProvider resolves for a
