@@ -37,6 +37,12 @@ const (
 	// is defined and filled ahead of it so the source is complete (ADR 0037), the
 	// same way a stream location is snapshotted before anything resolves it.
 	RoleSubtitles Role = "subtitles"
+	// RoleSettingsUI is backed by SettingsUIProvider — a module contributing its
+	// own settings screen as SDUI (ADR 0038). Unlike the source roles it produces
+	// no content: it renders the module's configuration UI, which the Platform
+	// hosts in a bounded settings slot. It is the one place a module contributes a
+	// screen rather than data — scoped to its own settings, never content.
+	RoleSettingsUI Role = "settings_ui"
 )
 
 // ContentRef identifies a piece of source content that is not (necessarily) in
@@ -227,6 +233,31 @@ type SubtitlesRequest struct {
 // them.
 type SubtitlesResponse struct {
 	Subtitles []Subtitle
+}
+
+// SettingsUIProvider lets a module contribute its own settings screen as SDUI
+// (ADR 0038). The SDK stays SDUI-agnostic: the screen is returned as a
+// serialised UINode tree (JSON bytes), not a typed SDUI value, so the contract
+// does not depend on the SDUI package. The module builds it with the published
+// mosaic-sdui producer binding; the Platform validates the bytes and renders
+// them in a bounded settings slot. A module fills RoleSettingsUI by implementing
+// it.
+type SettingsUIProvider interface {
+	SettingsUI(ctx context.Context, req SettingsUIRequest) (SettingsUIResponse, error)
+}
+
+// SettingsUIRequest carries the caller and the module's current settings, so the
+// module can render the live configuration (e.g. the installed addons) into the
+// screen.
+type SettingsUIRequest struct {
+	Caller   Caller
+	Settings []byte
+}
+
+// SettingsUIResponse carries the settings screen as a serialised UINode tree.
+// Empty UI is a valid "no settings screen" response.
+type SettingsUIResponse struct {
+	UI []byte
 }
 
 // MetadataProvider resolves full descriptive metadata for a ContentRef. It
