@@ -37,6 +37,13 @@ const (
 	// is defined and filled ahead of it so the source is complete (ADR 0037), the
 	// same way a stream location is snapshotted before anything resolves it.
 	RoleSubtitles Role = "subtitles"
+	// RolePlayback is backed by PlaybackProvider (playback.go) — the first
+	// *consumer* role, and the one entry here that is not a source. Every role
+	// above brings content in; this one acts on what materialising created,
+	// resolving a Part to playable bytes (ADR 0045). It is what ADR 0036's
+	// affordance gate keys on: with no consumer installed, the library is inert
+	// and the surface is discovery-only.
+	RolePlayback Role = "playback"
 	// RoleSettingsUI is backed by SettingsUIProvider — a module contributing its
 	// own settings screen as SDUI (ADR 0038). Unlike the source roles it produces
 	// no content: it renders the module's configuration UI, which the Platform
