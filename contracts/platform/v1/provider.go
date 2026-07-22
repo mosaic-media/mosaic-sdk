@@ -128,6 +128,12 @@ type CatalogItem struct {
 type Person struct {
 	Name string
 	Role string
+	// Photo is a headshot URL, empty when the source has none. Sources differ
+	// sharply here: an addon carrying only names is common, and one proxying a
+	// real database supplies both a character name and an image. Carrying it is
+	// what lets a consumer render a cast rail rather than a list of names —
+	// the field was absent, so a source that had photos had nowhere to put them.
+	Photo string
 }
 
 // EpisodePreview is one episode in a series' descriptive preview (ADR 0034) —
