@@ -31,4 +31,8 @@ type ContentService interface {
 	FindContentByExternalID(ctx context.Context, query FindContentByExternalIDQuery) (FindContentByExternalIDResult, error)
 	// GetContentNode reads one node, optionally with its direct children.
 	GetContentNode(ctx context.Context, query GetContentNodeQuery) (GetContentNodeResult, error)
+	// ListContentParts reads an item's playable parts — the read side of
+	// AttachContentPart, absent until a re-import needed to know what it had
+	// already stored.
+	ListContentParts(ctx context.Context, query ListContentPartsQuery) (ListContentPartsResult, error)
 }

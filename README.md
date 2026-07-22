@@ -44,6 +44,12 @@ and never serves bytes, because the Platform owns transports. The `Served`
 variant (a module producing bytes for the Platform to serve) and its `Open`
 method arrive with the torrent engine that needs them.
 
+**`v0.10.0`** adds `ListContentParts` — the read side of `AttachContentPart`,
+missing since the content model landed. A capability could write a Part and
+never read one back, so it could not see what it had itself created. A
+re-import needing to know which releases were already stored is what finally
+forced it.
+
 Pre-1.0 on purpose: the surface still changes as modules find its gaps.
 
 ## License

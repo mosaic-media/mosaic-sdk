@@ -55,3 +55,25 @@ type GetContentNodeResult struct {
 	Node     Node
 	Children []Node
 }
+
+// ListContentPartsQuery reads the playable parts of an item node.
+//
+// It closes a hole the surface has carried since the content model landed:
+// AttachContentPart could write a Part and nothing could read one back, so a
+// capability could not see what it had itself created. ADR 0045 named it while
+// building the first consumer; this is what finally needed it — a re-import has
+// to know which releases are already stored before it can add the ones that are
+// not.
+type ListContentPartsQuery struct {
+	Caller Caller
+	// NodeID is the item whose parts to read. A work or container has none of
+	// its own.
+	NodeID NodeID
+}
+
+// ListContentPartsResult carries the node's parts in natural order, so the
+// segments of a multi-disc edition come back in sequence and a candidate set
+// comes back in the order its source ranked it.
+type ListContentPartsResult struct {
+	Parts []Part
+}
