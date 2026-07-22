@@ -24,6 +24,21 @@ library.
 import v1 "github.com/mosaic-media/sdk/contracts/platform/v1"
 ```
 
+## Hand-written Go, not generated
+
+Mosaic has two published contract repositories built in opposite ways, and it
+is worth stating which is which. **This one is hand-written Go**; there are no
+`.proto` files, no codegen and no build step. [`sdui`](https://github.com/mosaic-media/sdui)
+is the protobuf one, with Go and TypeScript generated from `proto/`
+([ADR 0044](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0044-contracts-protobuf-workspace.md),
+which is scoped to the SDUI and session contracts).
+
+The split follows what each contract *is*. This SDK is Go interfaces with
+behaviour — `Capability`, `ContentService`, the provider roles, `Telemetry` —
+which a module implements in its own process, and which protobuf cannot
+express. `sdui` is a wire format consumed by several client languages, where
+codegen is exactly right.
+
 ## Status
 
 Extracted from `platform` into a standalone module and published. The Platform
@@ -49,6 +64,15 @@ missing since the content model landed. A capability could write a Part and
 never read one back, so it could not see what it had itself created. A
 re-import needing to know which releases were already stored is what finally
 forced it.
+
+**`v0.13.0` gives modules a voice** — `Telemetry`, reached with
+`TelemetryFrom(ctx)`, and the redaction-classed `Field` that crosses with it
+([ADR 0059](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0059-modules-observe-through-the-sdk.md)).
+Before it, a module could return an error or print to the Platform's stdout,
+and neither could be filtered, correlated or classified. The Platform owns the
+observability plane and implements the interface; a module emits and configures
+nothing. `TelemetryFrom` never returns nil, so a module records nothing and
+works unchanged on a Platform that provides none.
 
 Pre-1.0 on purpose: the surface still changes as modules find its gaps.
 
