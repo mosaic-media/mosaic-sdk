@@ -79,6 +79,23 @@ never read one back, so it could not see what it had itself created. A
 re-import needing to know which releases were already stored is what finally
 forced it.
 
+**`v0.19.0` adds `SearchContentQuery.AttributesContain`** — a containment filter
+over a node's module-owned `Attributes` document, so a capability can ask
+"which of my works did some module tag *this* way".
+
+Containment rather than a typed filter, because attributes are opaque to the
+Platform by design (ADR 0013 assigns their correctness to the writing
+capability). A typed filter would make the Platform learn what a module put
+there, which is the coupling the arrangement exists to avoid; *does this
+document contain this shape* is the one question that can be asked without
+understanding the answer. It is the counterpart of `FindContentByExternalID`,
+which has always worked this way over the neighbouring external-ids document.
+
+It is a **storage-engine obligation**: any `StorageAdapter` must support
+containment over both JSON documents. And a module can see what another module
+wrote — deliberate, matching the rest of the read surface, but it means a
+module's attribute keys are a published shape rather than a private one.
+
 **`v0.18.0` adds `ContentMetadata.Watch`** — where a title can be watched
 *outside* Mosaic, in one region, with `WatchAvailability`, `WatchOffer` and
 `WatchOfferType` as new types.
