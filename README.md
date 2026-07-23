@@ -79,6 +79,16 @@ never read one back, so it could not see what it had itself created. A
 re-import needing to know which releases were already stored is what finally
 forced it.
 
+**`v0.15.0` stores artwork on the node** — an `Artwork` value (poster,
+backdrop, logo) on `Node` and on `AddContentWorkCommand` / `AddContentChildCommand`
+([ADR 0071](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0071-content-artwork-is-stored-on-the-node.md)).
+Descriptive metadata is otherwise re-derived live from the provider (ADR 0034);
+artwork alone is written at materialisation and read back, because it is
+rendered in bulk on list surfaces like the continue-watching rail — one node
+read instead of a metadata round-trip per card — and because it is the one piece
+of art a user may later want to override, which is possible only for something
+the library owns.
+
 **`v0.14.0` opens the per-user tier** — playback state
 ([ADR 0046](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0046-playback-state-is-platform-owned.md)):
 `RecordPlaybackProgress`, `SetPlaybackFinished`, and the reads behind resume, a

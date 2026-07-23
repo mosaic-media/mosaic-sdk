@@ -19,6 +19,10 @@ type AddContentWorkCommand struct {
 	// empty object; the schema does not validate their contents (ADR 0013).
 	ExternalIDs []byte
 	Attributes  []byte
+	// Artwork is the node's stored image URLs (ADR 0071). A materialising
+	// capability fills it from the metadata it already fetched so a list surface
+	// need not re-derive art per card; empty is "the source had none".
+	Artwork Artwork
 }
 
 // AddContentWorkResult carries the committed work, whose MediaType is the
@@ -45,6 +49,9 @@ type AddContentChildCommand struct {
 	NaturalOrder float64
 	ExternalIDs  []byte
 	Attributes   []byte
+	// Artwork is the child's stored image URLs (ADR 0071) — for an episode, its
+	// still. Empty is "the source had none".
+	Artwork Artwork
 }
 
 // AddContentChildResult carries the committed child.

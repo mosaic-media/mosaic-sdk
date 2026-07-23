@@ -187,8 +187,15 @@ type Node struct {
 	// correctness to the writing capability. Both are GIN-indexed, so they
 	// are queryable but not typed.
 	Attributes []byte
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	// Artwork is the node's stored image URLs — poster, backdrop, logo (ADR
+	// 0071). Unlike the rest of the descriptive surface, which a detail screen
+	// re-derives live from the provider (ADR 0034), artwork is written at
+	// materialisation and read back here, so a list surface renders it without a
+	// per-card metadata call and a user can later override it. Empty when the
+	// node was written before artwork was stored, or the source had none.
+	Artwork   Artwork
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Canonical returns a copy of the node with its open type vocabularies
