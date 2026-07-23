@@ -79,6 +79,25 @@ never read one back, so it could not see what it had itself created. A
 re-import needing to know which releases were already stored is what finally
 forced it.
 
+**`v0.18.0` adds `ContentMetadata.Watch`** — where a title can be watched
+*outside* Mosaic, in one region, with `WatchAvailability`, `WatchOffer` and
+`WatchOfferType` as new types.
+
+It is the first read field that does not describe the title itself, and the
+doc comments lean hard on one distinction because it is the easy thing to get
+wrong: **an offer is not a source.** Every other read role answers "what can
+Mosaic get you"; this answers "where else does this exist". Nothing in it
+becomes a `Part`, nothing in it is playable through the Platform, and a client
+that renders an offer as a play control is making a promise the Platform cannot
+keep. `Link` is where an informational control should send the viewer.
+
+Two smaller shapes follow from what the data is. It is **strictly regional**, so
+a value names the one `Region` it describes and empty offers mean "none known
+*here*" rather than "unavailable". And it carries an `Attribution` string,
+because the upstreams that compile availability data generally require being
+credited wherever it is shown — carrying it in the contract is what keeps the
+Platform from having to know which upstream imposed that.
+
 **`v0.17.0` grows `ContentMetadata` for a source that models more than one
 title at a time** — `Keywords`, `Certification`, `Similar []RelatedItem`,
 `Collection *Collection` and `Trailers []Trailer`, with `RelatedItem`,

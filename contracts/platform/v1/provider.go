@@ -201,6 +201,76 @@ type Collection struct {
 	Items []RelatedItem
 }
 
+// WatchOfferType is how a provider makes a title available — the distinction
+// between "included in what you already pay for" and "costs money now", which is
+// the first thing a viewer wants to know.
+//
+// Open text with known values, like the media vocabularies (ADR 0015): a source
+// may report a kind Mosaic has never heard of, and a consumer that does not
+// recognise one shows it as-is rather than dropping the offer.
+type WatchOfferType string
+
+const (
+	// WatchSubscription is included with a subscription the viewer may hold.
+	WatchSubscription WatchOfferType = "subscription"
+	// WatchRent is a time-limited paid rental.
+	WatchRent WatchOfferType = "rent"
+	// WatchBuy is a paid purchase.
+	WatchBuy WatchOfferType = "buy"
+	// WatchFree is free and without advertising.
+	WatchFree WatchOfferType = "free"
+	// WatchAds is free but advertising-supported.
+	WatchAds WatchOfferType = "ads"
+)
+
+// WatchOffer is one service a title can be watched on, and on what terms.
+type WatchOffer struct {
+	// Provider is the service's name as the source gives it — "Netflix",
+	// "BBC iPlayer".
+	Provider string
+	// Logo is the service's logo URL, empty when the source has none.
+	Logo string
+	// Type is how the title is available on that service.
+	Type WatchOfferType
+}
+
+// WatchAvailability is where a title can be watched **outside Mosaic**, in one
+// region.
+//
+// # This is not a source and must never be rendered as one
+//
+// Every other read role answers "what can Mosaic get you"; this one answers
+// "where else does this exist". It is not a StreamProvider result, it does not
+// become a Part, and nothing in it is playable through the Platform. A client
+// that renders an offer as a play control is making a promise the Platform
+// cannot keep — the correct affordance is informational, and Link is where it
+// sends the viewer.
+//
+// # It is regional, and empty is not "unavailable"
+//
+// Availability differs entirely by country, so a value describes exactly one
+// Region and a source asked about the wrong one answers nothing. Empty Offers
+// means "the source knows of none *here*", which is not the same as the title
+// being unavailable — coverage varies by region and by how recently the source
+// last looked.
+type WatchAvailability struct {
+	// Region is the ISO 3166-1 country these offers apply to. A value with no
+	// Region is meaningless and a consumer should ignore it.
+	Region string
+	// Link is the source's own page for this title's availability. It is the
+	// right destination for an informational control, and where a source whose
+	// terms require sending traffic back expects it to go.
+	Link string
+	// Attribution names who compiled the availability data, when the source's
+	// terms require it to be shown. A consumer that displays offers must display
+	// this alongside them; it is carried in the contract precisely so the
+	// Platform does not have to know which upstream imposed it.
+	Attribution string
+	// Offers are the services the title is on, subscription first as the source
+	// ranks them.
+	Offers []WatchOffer
+}
+
 // Trailer is one promotional video a source knows about.
 //
 // It carries the hosting site and that site's own key rather than a URL, and
@@ -269,6 +339,15 @@ type ContentMetadata struct {
 	// is the common case; a source that has them supplies a site and a key rather
 	// than a URL.
 	Trailers []Trailer
+	// Watch is where this title can be watched **outside Mosaic**, for one
+	// region. Nil when the source has no such data or was not told which region
+	// to answer for.
+	//
+	// It is the one field here that does not describe the title itself, and the
+	// one a consumer can most easily render wrongly: these offers are not
+	// playable through the Platform and must not appear as play controls. See
+	// WatchAvailability.
+	Watch *WatchAvailability
 }
 
 // StreamLink is one playable location a StreamProvider resolves for a
