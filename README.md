@@ -79,6 +79,30 @@ never read one back, so it could not see what it had itself created. A
 re-import needing to know which releases were already stored is what finally
 forced it.
 
+**`v0.17.0` grows `ContentMetadata` for a source that models more than one
+title at a time** — `Keywords`, `Certification`, `Similar []RelatedItem`,
+`Collection *Collection` and `Trailers []Trailer`, with `RelatedItem`,
+`Collection` and `Trailer` as new types.
+
+Three of those close gaps
+[ADR 0034](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0034-rich-metadata-preview.md)
+recorded rather than invented: a franchise ("the other Avatar films"), related
+titles, and the finer-grained tags that make "more like this" mean anything. The
+addon protocol carries none of them, so the fields waited for a source that does.
+
+Two shape decisions are worth stating. **`Collection` is a descriptive
+projection, not the object graph's collection** — the graph expresses membership
+as a `RelationCollectionMember` edge between Works, and an edge needs two Works
+to exist, which a virtual item is not; a detail screen must render a franchise
+before anything has been materialised. And **`Trailer` carries a site and that
+site's key rather than a URL**, because assembling a watch or embed URL is an
+embed-policy decision that belongs to the client rather than to the contract.
+
+`Certification` is display-only text for the same reason `Runtime` is: age
+scales are national and not comparable, so the label is carried rather than
+mapped onto an invented common scale. Empty means unknown, which a consumer must
+not read as "suitable for everyone".
+
 **`v0.16.0` adds `Artwork.Landscape`** — wide 16:9 key art, distinct from
 `Backdrop`: a backdrop is scenery to sit *behind* a hero, this is a composed card
 image to sit *in* one, which is what a resume rail wants. Added because a real

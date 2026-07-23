@@ -155,6 +155,70 @@ type EpisodePreview struct {
 	Released string
 }
 
+// RelatedItem is one title related to the one being described — a franchise
+// sibling or a recommendation. It is a *virtual* item like a search result: it
+// carries a Ref so a consumer can open or materialise it, and the Platform fills
+// InLibrary and NodeID when it unions the list against the library (ADR 0028).
+//
+// It repeats SearchResult's shape rather than reusing it, deliberately. The two
+// are produced by different roles and answer different questions, and collapsing
+// them would mean a later field that belongs to one appearing on the other — the
+// same reason CatalogItem is its own type despite being identical to
+// SearchResult today.
+type RelatedItem struct {
+	Ref    ContentRef
+	Title  string
+	Year   int
+	Poster string
+	// InLibrary is true when the Platform matched this item to a library node.
+	InLibrary bool
+	// NodeID is that node's id when InLibrary, so a client can open it.
+	NodeID NodeID
+}
+
+// Collection is the franchise a work belongs to — "The Matrix Collection", "the
+// other Avatar films" ([ADR 0034](0034) recorded its absence as a gap Cinemeta
+// could not fill and a TMDB-class source could).
+//
+// It is a *descriptive projection*, not the object graph's collection. The graph
+// expresses membership as a RelationCollectionMember edge between Works, written
+// by Import; this is what a detail screen renders for a title whether or not
+// anything has been materialised, which is the case the edge cannot serve — an
+// edge needs two Works to exist, and a virtual item is neither.
+type Collection struct {
+	// Name is the franchise's own label.
+	Name string
+	// Overview is the franchise's description, empty when the source has none.
+	Overview string
+	// Poster and Backdrop are the franchise's own artwork, distinct from any
+	// member's.
+	Poster   string
+	Backdrop string
+	// Items are the franchise's members, in the source's order — usually
+	// chronological. It includes the work being described, so a consumer that
+	// wants "the others" filters on the Ref it already holds rather than trusting
+	// the source to have excluded it.
+	Items []RelatedItem
+}
+
+// Trailer is one promotional video a source knows about.
+//
+// It carries the hosting site and that site's own key rather than a URL, and
+// that is the contract: building a watch or embed URL is a client concern, and a
+// Platform that assembled one would be choosing an embed policy on the client's
+// behalf. A consumer that does not recognise Site ignores the entry.
+type Trailer struct {
+	// Name is the video's title ("Official Trailer").
+	Name string
+	// Site is the host as the source names it — "YouTube", "Vimeo".
+	Site string
+	// Key is the site's own identifier for the video.
+	Key string
+	// Official is true when the source marks the video as published by the
+	// rights holder rather than by a channel.
+	Official bool
+}
+
 // ContentMetadata is the descriptive detail a MetadataProvider resolves for a
 // ContentRef (the `meta` resource) — used to enrich an existing node, to back a
 // detail screen (for a virtual item and, re-derived, an in-library one — ADR
@@ -185,6 +249,26 @@ type ContentMetadata struct {
 	// Episodes is the series episode preview (ADR 0034), empty for a movie or a
 	// meta-only source. A read projection the UI groups by season; not the tree.
 	Episodes []EpisodePreview
+	// Keywords are the source's own descriptive tags ("dystopia", "time loop") —
+	// finer-grained than Genres and a better basis for "more like this". Empty
+	// when the source has no such vocabulary, which most addons do not.
+	Keywords []string
+	// Certification is the age rating as the source labels it for the region the
+	// source was asked about — "15", "PG-13", "TV-MA". Display-only text, like
+	// Runtime: the scales are national and not comparable, so the Platform stores
+	// and shows the label rather than mapping it to an invented common scale.
+	// Empty when unknown, which must not be read as "suitable for everyone".
+	Certification string
+	// Similar are titles a viewer of this one is likely to want, best-first as
+	// the source ranks them. Empty for a source with no such notion.
+	Similar []RelatedItem
+	// Collection is the franchise this work belongs to, nil when it belongs to
+	// none or the source does not model franchises.
+	Collection *Collection
+	// Trailers are promotional videos the source knows about, best-first. Empty
+	// is the common case; a source that has them supplies a site and a key rather
+	// than a URL.
+	Trailers []Trailer
 }
 
 // StreamLink is one playable location a StreamProvider resolves for a
