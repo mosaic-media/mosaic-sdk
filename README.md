@@ -28,7 +28,7 @@ import v1 "github.com/mosaic-media/sdk/contracts/platform/v1"
 
 Mosaic has two published contract repositories built in opposite ways, and it
 is worth stating which is which. **This one is hand-written Go**; there are no
-`.proto` files, no codegen and no build step. [`sdui`](https://github.com/mosaic-media/sdui)
+`.proto` files, no codegen and no build step. [`contracts`](https://github.com/mosaic-media/contracts)
 is the protobuf one, with Go and TypeScript generated from `proto/`
 ([ADR 0044](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0044-contracts-protobuf-workspace.md),
 which is scoped to the SDUI and session contracts).
