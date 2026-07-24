@@ -275,3 +275,12 @@ Forcing the transport's `Proxy` to always return the proxy URL has no such
 exception. A module that builds a fully custom transport with an explicit nil
 `Proxy` can still bypass it; that residual gap is what OS-level network denial
 (ADR 0064's layer 3) closes.
+
+**`host/v0.3.0` — a module can print its own manifest.** Run a module binary
+with `--mosaic-manifest` and it prints its `Manifest()` — id, version, name,
+roles — as JSON and exits, rather than serving. A module's release uses this to
+learn the module's identity for the distribution manifest without hardcoding it
+in a workflow, where it would drift from the code: a role added in Go appears in
+the published manifest with no second edit. It is the one thing `Serve` prints
+to stdout deliberately, and only in a mode that never serves, so there is no
+go-plugin handshake to corrupt.
