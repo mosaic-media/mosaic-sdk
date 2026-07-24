@@ -230,3 +230,30 @@ Apache License, Version 2.0 (see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE)).
 The SDK is deliberately permissive: it is the contract a Module builds against,
 so a Module author may use it under any license. This is independent of the
 Platform's license (AGPL-3.0 with a Module Linking Exception).
+
+**`host/v0.1.0` — the module runs as its own process, and the contract does
+not change.** `sdk/host` is a **nested module** with its own `go.mod`
+([ADR 0064](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0064-extension-module-boundary.md),
+[ADR 0077](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0077-go-plugin-as-the-extension-harness.md)).
+A module gains a `main.go` of `func main() { host.Serve(mymodule.New()) }` and
+otherwise keeps the code it has.
+
+**Nothing in `sdk` itself moved, and that is the point.** The harness needs
+`hashicorp/go-plugin`, gRPC and the generated wire bindings; this module's
+`go.mod` is still a module line and a Go version. That is the property
+[ADR 0059](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0059-modules-observe-through-the-sdk.md)
+established when it declared a telemetry interface rather than re-exporting
+OpenTelemetry, and `host` carries the test that asserts it — a `go get` in the
+wrong directory is all it would take, and nothing else would fail.
+
+Import only `sdk` to write and unit-test a module with no transport at all.
+Add `sdk/host` when you want it to run as a process. The nested module is
+tagged `host/vX.Y.Z` alongside the parent's `vX.Y.Z`.
+
+Two things the boundary deliberately does **not** change. A module still
+cannot classify an error: the Platform's categories are its own internal
+vocabulary and are not published here, so in process and out of process alike a
+module receives an error it can read but not branch on. And `Caller` is still
+something a module forwards rather than inspects — across the boundary it
+becomes a handle the Platform mints per invocation and revokes on return, which
+module code never has to know.

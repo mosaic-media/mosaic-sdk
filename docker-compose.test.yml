@@ -5,12 +5,19 @@
 # This is the sanctioned way to run this repository's gates. Nothing is built
 # or tested on the host.
 #
-# The reason here is not a hidden dependency — this module has none, by design,
-# and `go build ./...` is genuinely the whole thing. It is that **this is the
-# surface a third party compiles against**, and the only claim worth making
-# about it is that it builds under a pinned toolchain rather than under
-# whatever happens to be installed on one machine. The Go version below and
-# the one in go.mod are the same statement made twice, and they must agree.
+# The reason here is not a hidden dependency — this module has none, by design.
+# It is that **this is the surface a third party compiles against**, and the
+# only claim worth making about it is that it builds under a pinned toolchain
+# rather than under whatever happens to be installed on one machine. The Go
+# version below and the one in go.mod are the same statement made twice, and
+# they must agree.
+#
+# **`host/` is a separate Go module and needs its own commands.** `./...` from
+# this directory does not descend into a nested module, so a gate that ran only
+# here would report green while never compiling the harness at all — the exact
+# shape of failure this container exists to prevent. It is nested precisely so
+# the parent's dependency graph can stay empty (ADR 0064), and `host` carries
+# the test that asserts it still is.
 #
 # For a shell in the same environment:
 #
@@ -45,6 +52,12 @@ services:
           cat /tmp/unformatted >&2
           exit 1
         fi
+        echo "--- sdk (the contract) ---"
+        go build ./...
+        go vet ./...
+        go test ./...
+        echo "--- sdk/host (the harness, a separate module) ---"
+        cd host
         go build ./...
         go vet ./...
         go test ./...
