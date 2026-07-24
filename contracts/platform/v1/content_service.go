@@ -18,6 +18,9 @@ type ContentService interface {
 	AddContentChild(ctx context.Context, cmd AddContentChildCommand) (AddContentChildResult, error)
 	// AttachContentPart attaches playable bytes to an item.
 	AttachContentPart(ctx context.Context, cmd AttachContentPartCommand) (AttachContentPartResult, error)
+	// SetContentArtwork replaces a node's stored artwork. It is the one write
+	// here that updates an existing node rather than creating one.
+	SetContentArtwork(ctx context.Context, cmd SetContentArtworkCommand) (SetContentArtworkResult, error)
 	// RelateContent draws one edge of the association graph.
 	RelateContent(ctx context.Context, cmd RelateContentCommand) (RelateContentResult, error)
 	// BindContentSource records that a source resolves to a node.

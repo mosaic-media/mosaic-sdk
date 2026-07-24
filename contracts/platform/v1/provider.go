@@ -44,6 +44,25 @@ const (
 	// affordance gate keys on: with no consumer installed, the library is inert
 	// and the surface is discovery-only.
 	RolePlayback Role = "playback"
+	// RoleArtwork is backed by ArtworkProvider — a source that supplies *only*
+	// artwork for content something else already identified (ADR 0075).
+	//
+	// It is neither a source role nor a consumer role, which is why it is worth
+	// reading twice. Every role above either brings content in or acts on what
+	// materialising created; this one **enriches content that already exists**. A
+	// dedicated artwork database has no titles, no overviews, no search and no
+	// catalogs — there is no query that turns "Blade Runner" into a result, you
+	// must already know which film you mean — so it can answer exactly one
+	// question and none of the others.
+	//
+	// **It does not satisfy ADR 0035's metadata requirement, and must not be
+	// used to.** A module that cannot name a film has no business counting
+	// toward the guarantee that Mosaic can name films. That is the specific
+	// mistake this role exists to prevent: declaring RoleMetadata to reach
+	// ContentMetadata's image fields would pass the composition-root check with a
+	// module that cannot describe anything, and the failure would be a
+	// deployment that boots and cannot identify content — not a red test.
+	RoleArtwork Role = "artwork"
 	// RoleSettingsUI is backed by SettingsUIProvider — a module contributing its
 	// own settings screen as SDUI (ADR 0038). Unlike the source roles it produces
 	// no content: it renders the module's configuration UI, which the Platform
@@ -409,6 +428,71 @@ type SubtitlesRequest struct {
 // them.
 type SubtitlesResponse struct {
 	Subtitles []Subtitle
+}
+
+// ExternalIdentity is one shared identifier for a piece of content — a scheme
+// and the id under it ("imdb"/"tt0083658", "tvdb"/"73739").
+//
+// It is the *neutral* addressing a provider is handed when it did not source the
+// content it is being asked about (ADR 0073, ADR 0075). A native id is the
+// producing module's own business and means nothing to anyone else; a shared
+// identity is the one thing two modules that have never heard of each other can
+// both recognise.
+type ExternalIdentity struct {
+	// Scheme names the identifier space — "imdb", "tvdb", "tmdb".
+	Scheme string
+	// ID is the identifier within that scheme.
+	ID string
+}
+
+// ArtworkProvider resolves artwork candidates for content that already exists.
+// A module fills RoleArtwork by implementing it.
+//
+// It is called only about content it did not source, which is the whole point:
+// the Platform runs it as a best-effort enrichment pass over a materialised work
+// (ADR 0075), the same shape ADR 0073 established for stream providers. A
+// provider that recognises none of the identities it was handed returns an empty
+// response and **no error** — being asked about content it does not know is
+// normal, not a failure, and an error there would make an artwork source being
+// down lose a user the work they just added.
+type ArtworkProvider interface {
+	Artwork(ctx context.Context, req ArtworkRequest) (ArtworkResponse, error)
+}
+
+// ArtworkRequest names the content to find artwork for by its shared external
+// identities, rather than by a ContentRef.
+//
+// **The whole identity set is handed over at once, not one at a time**, and that
+// differs from how StreamRequest is invoked. Which identifier a source prefers
+// is the source's business: a real artwork database keys films by one scheme and
+// television by another, and letting the module pick from what is available
+// keeps that dialect where ADR 0051 says it belongs. Looping identity-by-identity
+// Platform-side would also turn one decline into several.
+type ArtworkRequest struct {
+	Caller   Caller
+	Settings []byte
+	// Identities are the shared external ids the content is known by, in stable
+	// scheme order. A provider takes the first it speaks and ignores the rest.
+	Identities []ExternalIdentity
+	// MediaType is the Platform media type, which is what tells a provider
+	// whether it is being asked about a film or a series — the two are
+	// frequently different endpoints keyed by different schemes.
+	MediaType MediaType
+	// Season is the season number when the request is about one season of a
+	// series, and 0 when it is about the work itself. Season artwork is a real
+	// distinction rather than a filter: a source has per-season posters, and a
+	// series that shows one poster four times is the thing having them fixes.
+	Season int
+}
+
+// ArtworkResponse carries the candidates the source offers, best-first as it
+// ranks them.
+//
+// A provider fills each candidate's Slot, URL, Language and Rank. It may leave
+// Source empty: the Platform stamps its module id, so provenance is recorded by
+// the one party that cannot get it wrong.
+type ArtworkResponse struct {
+	Candidates []ArtworkCandidate
 }
 
 // SettingsUIProvider lets a module contribute its own settings screen as SDUI

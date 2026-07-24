@@ -79,6 +79,35 @@ never read one back, so it could not see what it had itself created. A
 re-import needing to know which releases were already stored is what finally
 forced it.
 
+**`v0.21.0` turns artwork into a candidate set and adds the eighth role** —
+`ArtworkCandidate`, `ArtworkSlot`, `Artwork.Candidates`, `RoleArtwork`,
+`ArtworkProvider` and `ExternalIdentity`
+([ADR 0074](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0074-artwork-is-a-candidate-set.md),
+[ADR 0075](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0075-the-artwork-provider-role.md)).
+
+`Artwork` held one URL per slot, so a source that returns forty posters — which
+is what a dedicated artwork database *is* — had thirty-nine discarded, and a
+user could never be offered a choice because the alternatives never left the
+module. The four flat slots stay and keep their type; what changes is their
+**meaning**, from "the artwork the provider gave" to "the artwork that was
+*chosen*", with `Candidates` holding what it was chosen from. That is what keeps
+the change additive: every consumer still reads `Poster`, and there is still
+exactly one answer to "what is this node's poster".
+
+A candidate carries `Source`, `Language` and `Rank` because those are what a
+choice gets made on. Two of them are easy to misread and are documented at
+length: an **empty `Language` means textless**, which is a positive property and
+usually the right backdrop to sit under a clearlogo; and **`Rank` is not
+comparable across sources**, since one source's likes and another's vote average
+measure different things — it orders within a source and nowhere else.
+
+`RoleArtwork` is neither a source role nor a consumer role: it enriches content
+that already exists. Its doc comment says plainly that it does **not** satisfy
+[ADR 0035](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0035-metadata-as-required-capability.md)'s
+metadata requirement, because the tempting shortcut — declaring `RoleMetadata`
+to reach `ContentMetadata`'s image fields — would pass the composition-root
+check with a module that cannot name a film.
+
 **`v0.20.0` adds `StreamRequest.Season` and `StreamRequest.Episode`** — neutral
 coordinates for an episode, so a stream provider can be asked about content it
 did not source ([ADR 0073](https://github.com/mosaic-media/architecture/blob/main/docs/adr/0073-stream-resolution-is-decoupled-from-metadata-provenance.md)).

@@ -88,6 +88,49 @@ type AttachContentPartResult struct {
 	Part Part
 }
 
+// SetContentArtworkCommand replaces a node's stored artwork.
+//
+// It is the first command that *updates* a node rather than creating one, and
+// it exists because artwork was the first stored field with a reason to change
+// after materialisation. ADR 0071 recorded its absence as owed in as many
+// words: "there is no command that updates a stored work's fields, so a
+// re-import does not refresh its artwork today."
+//
+// Two things need it. The artwork enrichment pass (ADR 0075) resolves art for a
+// work the module already wrote, so it has a node and no way to put art on it.
+// And a user choosing a different poster (ADR 0074) is an update to a node by
+// definition — it is the feature ADR 0071 said storing artwork on the node was
+// the precondition for.
+//
+// # It replaces, it does not merge
+//
+// The whole value is written, so a caller that wants to add candidates reads,
+// merges and writes back. Merge semantics would have to decide what happens when
+// two providers offer the same slot, and that decision belongs to whoever is
+// assembling the set — not to a command that cannot see why it was called.
+//
+// This is the same shape as configureModule's replace semantics (ADR 0021), and
+// it carries the same obligation: a caller that writes a partial value erases
+// the rest. In particular, **a caller that re-resolves the flat slots will
+// overwrite a user's chosen artwork**, so the selection feature will need to
+// mark a choice as the user's before an automated pass can safely run again.
+// Nothing marks it today because nothing sets it today.
+type SetContentArtworkCommand struct {
+	Caller Caller
+	// NodeID is the node whose artwork is being set. Any kind of node may carry
+	// artwork: a work has key art, a season container has its own poster, and an
+	// item has a still.
+	NodeID NodeID
+	// Artwork is the complete new value, selection and candidates together.
+	Artwork Artwork
+}
+
+// SetContentArtworkResult carries the updated node, so a caller sees what was
+// committed rather than assuming its own value round-tripped.
+type SetContentArtworkResult struct {
+	Node Node
+}
+
 // RelateContentCommand draws a typed, directed edge between two works
 // (ADR 0013) — an adaptation, a sequel, a collection membership.
 type RelateContentCommand struct {
